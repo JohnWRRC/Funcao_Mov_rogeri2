@@ -34,7 +34,7 @@ class FuncGrass(object):
     
     
     def WriteTxt(self):
-        os.chdir(self.workspacefolde+'/Files/temp')
+        os.chdir(r'D:\_data\Funcao_Mov_rogerio\Grass\Files\temp')#trocar
         
         txt=open("mypoints.csv","w")
         txt.write(`self.corrd_X_unique1`+","+`self.corrd_Y_unique1`+"\n")
@@ -42,10 +42,13 @@ class FuncGrass(object):
         txt.close()       
 
     def TxtExcluded(self):
-        os.chdir(self.workspacefolde+'/Files/temp')
+        os.chdir(r'D:\_data\Funcao_Mov_rogerio\Grass\Files\temp')#trocar
         txt=open("mypoints.txt","w")
         txt.write(`self.corrd_X_unique1`+"|"+`self.corrd_Y_unique1`)
         txt.close()         
+    def createFileSinglePoint(self):
+        os.chdir(r'D:\_data\Funcao_Mov_rogerio\Grass\Files\temp')#trocar
+        grass.run_command ('v.in.ascii',input='mypoints.txt',output=self.outputnameFilePointshp)
         
         
     def VlinesLinesToPoint(self):
@@ -53,7 +56,7 @@ class FuncGrass(object):
         grass.run_command ('v.to.points',input=self.outputnameFileLineshp,out=self.outputnameFilePointshp,dmax=self.spacemeters,overwrite = True,quiet=True)  
     
     def ExprtImpT(self,):
-        os.chdir(self.workspacefolde+'/Files/temp')
+        os.chdir(r'D:\_data\Funcao_Mov_rogerio\Grass\Files\temp') #trocar
         grass.run_command ('v.out.ogr',input=self.outputnameFilePointshp,dsn=self.outputnameFilePointshp+'.shp',layer=2,type='point',quiet=True)
         grass.run_command ('v.in.ogr',dsn=self.outputnameFilePointshp+'.shp',out=self.outputnameFilePointshp,overwrite = True,quiet=True)
         grass.run_command ('v.build',map=self.outputnameFilePointshp)   
@@ -80,7 +83,15 @@ class FuncGrass(object):
         
     def CreateSelectionDist(self):
         dist=list(self.tabVar['dist'])
-        dist=[float(i) for i in dist if i != "NA"]
+    
+        dist2=[]
+        for i in dist:
+            if i== "NA":
+                dist2.append(i)
+            else:
+                dist2.append(float(i))
+                
+                
         burst=list(self.tabVar['burst'])
         fix=list(self.tabVar['fix'])
         self.xcordList=list(self.tabVar['x'])
@@ -90,7 +101,7 @@ class FuncGrass(object):
         
         
         
-        for i in xrange(2):
+        for i in xrange(3):
             
             if dist[i]>=50:
                 self.corrd_X_unique1= self.xcordList[i]
@@ -125,20 +136,18 @@ class FuncGrass(object):
                 
 
 
-            else:
-                
+            if dist[i]<50 or dist[i]=="NA":
                 self.corrd_X_unique1= self.xcordList[i]
                 self.corrd_Y_unique1= self.ycordList[i]  
                 self.outputnameFilePointshp=fix[i]
                 FuncGrass.TxtExcluded(self)
-                grass.run_command ('v.in.ascii',input='mypoints.txt',output=self.outputnameFilePointshp)
                 FuncGrass.ExprtImpT(self)
                 FuncGrass.addcol(self, self.outputnameFilePointshp) 
-                FuncGrass.UpdateData(self, fix[i], fix[i+1],name=fix[i]+'_'+fix[i+1])
+                FuncGrass.UpdateData(self, fix[i],'NA',name=fix[i])
                 
                 
 tableInp='ssf_lobos_exemplo_enumerate.txt'
-workspacefolder=r'D:\_data\Funcao_Mov_rogerio'
+workspacefolder=r'D:\_data\Funcao_Mov_rogerio\Funcao_Mov_rogeri2\Tables'
 
 Insnt=FuncGrass(tableInp, workspacefolder)
 Insnt.ReadRable()
