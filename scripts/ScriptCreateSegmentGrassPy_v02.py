@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Editos: Bernardo Pacas, John Ribeiro
+
+
+"""
+
 import os
 import numpy as np
 import math
@@ -9,7 +16,9 @@ import grass.script as grass
 
 class FuncGrass(object):
     #
-    def __init__(self,tableInp,workspacefolder):
+    def __init__(self,tableInp,workspacefolder,SpacePointDistance,Mindistance):
+        self.Mindistance=Mindistance
+        self.SpacePointDistance=SpacePointDistance #spacing of separate points
         self.workspacefolde=workspacefolder # input table way
         self.tableInp=tableInp #input table name
         self.tabVar='' # table load 
@@ -24,7 +33,7 @@ class FuncGrass(object):
         
         self.outputnameFileLineshp=''
         self.outputnameFilePointshp=''
-        self.spacemeters=50 #spacing of separate points
+        
         self.burst='' # Colouna extracted ta table
         self.dist=''  # Colouna extracted ta table
         self.dist2='' # Colouna extracted ta table
@@ -83,7 +92,7 @@ class FuncGrass(object):
         """Function that creates the online file into the gras"""
         
         grass.run_command ('v.in.lines',input="mypoints.csv",out=self.outputnameFileLineshp,fs=",",overwrite = True,quiet=True)      
-        grass.run_command ('v.to.points',input=self.outputnameFileLineshp,out=self.outputnameFilePointshp,dmax=self.spacemeters,overwrite = True,quiet=True)  
+        grass.run_command ('v.to.points',input=self.outputnameFileLineshp,out=self.outputnameFilePointshp,dmax=self.SpacePointDistance,overwrite = True,quiet=True)  
     
     def ExprtImpT(self,):
         """
@@ -141,6 +150,10 @@ class FuncGrass(object):
      
     
     def CreateSubsetList(self):
+        """
+        
+        This function creates the subset lists the original table
+        """
         #----------------------------------------
         self.dist=list(self.tabVar['dist'])
         self.dist2=[]
@@ -153,13 +166,20 @@ class FuncGrass(object):
          
         self.burst=list(self.tabVar['burst'])
         self.fix=list(self.tabVar['fix'])
+        self.xcordList=list(self.tabVar['x']) # 
+        self.ycordList=list(self.tabVar['y'])        
        
-    def CreateSelectionDist(self):
-        self.xcordList=list(self.tabVar['x'])
-        self.ycordList=list(self.tabVar['y'])
+    def CreateSelectionDist(self):  
+        
+        """
+        Main function , that function all the other functions are called
+        """
+        FuncGrass.ReadRable(self)
+        FuncGrass.CreateSubsetList(self) 
+
         for i in xrange(3):
-            FuncGrass.CreateSubsetList(self)
-            if self.dist2[i]>=50:
+            
+            if self.dist2[i]>=self.Mindistance:
                 self.corrd_X_unique1= self.xcordList[i]
                 self.corrd_Y_unique1= self.ycordList[i]    
                 self.burstLine1=self.burst[i]
@@ -188,7 +208,7 @@ class FuncGrass(object):
                 
 
 
-            if dist2[i]<50 or dist2[i]=="NA":
+            if dist2[i]<self.Mindistance or dist2[i]=="NA":
                 self.corrd_X_unique1= self.xcordList[i]
                 self.corrd_Y_unique1= self.ycordList[i]  
                 self.outputnameFilePointshp=fix[i]
@@ -197,13 +217,17 @@ class FuncGrass(object):
                 FuncGrass.addcol(self, self.outputnameFilePointshp) 
                 FuncGrass.UpdateData(self, self.fix[i],'NA',name=self.fix[i])
                 
-                
-tableInp='ssf_lobos_exemplo_enumerate.txt'
+ 
+#-------------------------------------------------------------------------------------------#            
+#---------------------------------define parameters-----------------------------------------#
+tableInp='ssf_lobos_exemplo_enumerate.txt' 
 workspacefolder=r'D:\_data\Funcao_Mov_rogerio\Funcao_Mov_rogeri2\Tables'
+SpacePointDistance=50
+Mindistance=50
+#-------------------------------------------------------------------------------------------#   
 
-Insnt=FuncGrass(tableInp, workspacefolder)
-Insnt.ReadRable()
-Insnt.CreateSelectionDist()
+Insnt=FuncGrass(tableInp, workspacefolder, SpacePointDistance, Mindistance) # instance class
+Insnt.CreateSelectionDist() # run main function
 
         
 
