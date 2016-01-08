@@ -16,7 +16,7 @@ import grass.script as grass
 
 class FuncGrass(object):
     #
-    def __init__(self,tableInp,workspacefolder,SpacePointDistance,Mindistance):
+    def __init__(self,tableInp,workspacefolder,SpacePointDistance,Mindistance,LandCovermap):
         self.Mindistance=Mindistance
         self.SpacePointDistance=SpacePointDistance #spacing of separate points
         self.workspacefolde=workspacefolder # input table way
@@ -38,6 +38,7 @@ class FuncGrass(object):
         self.dist=''  # Colouna extracted ta table
         self.dist2='' # Colouna extracted ta table
         self.fix=''   # Colouna extracted ta table 
+        self.LandCovermap=LandCovermap
         
     
     def ReadRable(self):
@@ -108,7 +109,7 @@ class FuncGrass(object):
         os.chdir(r'D:\_data\Funcao_Mov_rogerio\Grass\Files\temp') #trocar
         grass.run_command ('v.out.ogr',input=self.outputnameFilePointshp,dsn=self.outputnameFilePointshp+'.shp',layer=2,type='point',quiet=True)
         grass.run_command ('v.in.ogr',dsn=self.outputnameFilePointshp+'.shp',out=self.outputnameFilePointshp,overwrite = True,quiet=True)
-        #grass.run_command ('v.build',map=self.outputnameFilePointshp)   
+        grass.run_command ('v.build',map=self.outputnameFilePointshp)   
         
     def renameDropCol(self,maps):
         
@@ -117,7 +118,7 @@ class FuncGrass(object):
         column and bobona called " LCAT " that not even fucking
         go out , not this function is working a lot.
         """        
-        grass.run_command ('v.db.dropcol',map=maps,column="lcat",quiet=True)    
+        grass.run_command ('v.db.dropcol',map=maps,column="cat_",quiet=True)    
     
     def addcol(self,maps):
         
@@ -129,7 +130,7 @@ class FuncGrass(object):
         grass.run_command ('v.db.addcol',map=maps,columns="P1 varchar(15)")
         grass.run_command ('v.db.addcol',map=maps,columns="P2 varchar(15)")
         grass.run_command ('v.db.addcol',map=maps,columns="NameF varchar(15)")
-        grass.run_command ('v.db.addcol',map=maps,columns="P1 varchar(15)")
+        grass.run_command ('v.db.addcol',map=maps,columns="Class varchar(15)")
       
     
     
@@ -147,6 +148,7 @@ class FuncGrass(object):
         grass.run_command ('v.db.update',map=self.outputnameFilePointshp,col="P1",value=p1,quiet=True)
         grass.run_command ('v.db.update',map=self.outputnameFilePointshp,col="P2",value=p2,quiet=True)   
         grass.run_command ('v.db.update',map=self.outputnameFilePointshp,col="NameF",value=name,quiet=True)
+        
      
     
     def CreateSubsetList(self):
@@ -157,7 +159,7 @@ class FuncGrass(object):
         #----------------------------------------
         self.dist=list(self.tabVar['dist'])
         self.dist2=[]
-        for i in dist:
+        for i in self.dist:
             if i== "NA":
                 self.dist2.append(i)
             else:
@@ -167,7 +169,9 @@ class FuncGrass(object):
         self.burst=list(self.tabVar['burst'])
         self.fix=list(self.tabVar['fix'])
         self.xcordList=list(self.tabVar['x']) # 
-        self.ycordList=list(self.tabVar['y'])        
+        self.ycordList=list(self.tabVar['y'])    
+    def getAttrMaps(self):
+        grass.run_command ('v.what.rast',vector=self.outputnameFilePointshp,raster=self.LandCovermap,column='class')
        
     def CreateSelectionDist(self):  
         
@@ -200,22 +204,25 @@ class FuncGrass(object):
                         FuncGrass.WriteTxt(self)
                         FuncGrass.VlinesLinesToPoint(self)
                         FuncGrass.ExprtImpT(self)
-                        #FuncGrass.renameDropCol(self, self.outputnameFilePointshp)
                         FuncGrass.addcol(self, self.outputnameFilePointshp) 
                         FuncGrass.UpdateData(self, self.fix[i], self.fix[i+1],name=self.fix[i]+'_'+self.fix[i+1])
+                        FuncGrass.renameDropCol(self, self.outputnameFilePointshp)
+                        FuncGrass.getAttrMaps(self)
                     else:
                         pass
                 
 
 
-            if dist2[i]<self.Mindistance or dist2[i]=="NA":
+            if self.dist2[i]<self.Mindistance or self.dist2[i]=="NA":
                 self.corrd_X_unique1= self.xcordList[i]
                 self.corrd_Y_unique1= self.ycordList[i]  
-                self.outputnameFilePointshp=fix[i]
+                self.outputnameFilePointshp=self.fix[i]
                 FuncGrass.TxtExcluded(self)
                 FuncGrass.ExprtImpT(self)
                 FuncGrass.addcol(self, self.outputnameFilePointshp) 
                 FuncGrass.UpdateData(self, self.fix[i],'NA',name=self.fix[i])
+                FuncGrass.renameDropCol(self, self.outputnameFilePointshp)
+                FuncGrass.getAttrMaps(self)
                 
  
 #-------------------------------------------------------------------------------------------#            
@@ -224,9 +231,11 @@ tableInp='ssf_lobos_exemplo_enumerate.txt'
 workspacefolder=r'D:\_data\Funcao_Mov_rogerio\Funcao_Mov_rogeri2\Tables'
 SpacePointDistance=50
 Mindistance=50
+LandCovermap='Mapa_final_AreaLobo_raster'
 #-------------------------------------------------------------------------------------------#   
 
-Insnt=FuncGrass(tableInp, workspacefolder, SpacePointDistance, Mindistance) # instance class
+Insnt=FuncGrass(tableInp, workspacefolder, SpacePointDistance, Mindistance, 
+               LandCovermap) # instance class
 Insnt.CreateSelectionDist() # run main function
 
         
